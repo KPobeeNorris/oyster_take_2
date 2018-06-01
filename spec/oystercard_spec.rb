@@ -2,8 +2,20 @@ require 'oystercard'
 
 RSpec.describe OysterCard do
 
-  it "will be initialized with a balance of 0" do
+  let(:entry_station) { double name: "entry_station", zone: 1 }
+  let(:exit_station)  { double name: "exit_station", zone: 3 }
+
+  def touch_in
+    subject.top_up(OysterCard::MIN_BALANCE)
+    subject.touch_in(entry_station)
+  end
+
+  it "will be initialised with a balance of 0" do
     expect(subject.balance).to eq 0
+  end
+
+  it "will have no journey history on initialisation" do
+    expect(subject.journey_log).to eq []
   end
 
   describe '#top_up' do
@@ -21,45 +33,46 @@ RSpec.describe OysterCard do
   end
 
   describe '#touch_in' do
-    it "will change the in use status to true" do
-      subject.top_up(OysterCard::MIN_BALANCE)
-      expect{subject.touch_in}.to change{subject.in_journey}.to true
+    it "will raise an error if the balance is below the minimum threshold" do
+      expect{ subject.touch_in(entry_station) }.to raise_error(RuntimeError, "Sorry, you don't have the required minimum balance of #{OysterCard::MIN_BALANCE}")
     end
 
-    it "will raise an error if the balance is below the minimum threshold" do
-      expect{ subject.touch_in }.to raise_error(RuntimeError, "Sorry, you don't have the required minimum balance of #{OysterCard::MIN_BALANCE}")
+    it "will show as being in journey" do
+      touch_in
+      expect(subject.in_journey?).to be true
     end
   end
 
   describe '#touch_out' do
     it "will change the in use status to false" do
-      subject.top_up(OysterCard::MIN_BALANCE)
-      subject.touch_in
-      expect{subject.touch_out}.to change{subject.in_journey}.to false
+      touch_in
+      subject.touch_out(exit_station)
+      expect(subject.in_journey?).to be false
     end
 
     it "will deduct the minimum fare" do
-      subject.top_up(OysterCard::MIN_BALANCE)
-      subject.touch_in
-      expect{subject.touch_out}.to change{subject.balance}.by(-OysterCard::MIN_FARE)
+      touch_in
+      expect{subject.touch_out(exit_station)}.to change{subject.balance}.by(-Journey::MIN_FARE)
+    end
+
+    it "will deduct a penalty fare" do
+      touch_in
+      expect{subject.touch_in(entry_station)}.to change{subject.balance}.by(-Journey::PENALTY_FARE)
     end
   end
 
-  describe '#in_journey?' do
-
-    it "will initially not be in journey" do
-      expect(subject.in_journey?).to be false
+  describe "journey history" do
+    it "will keep a log of a full journey" do
+      touch_in
+      subject.touch_out(exit_station)
+      expect(subject.journey_log).to eq [{:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>"exit_station", :exit_zone=>3}]
     end
 
-    it "will return true if user has touched in" do
-      subject.top_up(OysterCard::MIN_BALANCE)
-      subject.touch_in
-      expect(subject.in_journey?).to be true
-    end
-
-    it "will return true if user has touched out" do
-      subject.touch_out
-      expect(subject.in_journey?).to be false
+    it "will record an imcomplete journey" do
+      touch_in
+      touch_in
+      subject.touch_out(exit_station)
+      expect(subject.journey_log).to eq [{:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>nil, :exit_zone=>nil}, {:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>"exit_station", :exit_zone=>3}]
     end
   end
 end
