@@ -12,10 +12,6 @@ RSpec.describe OysterCard do
     expect(subject.balance).to eq 0
   end
 
-  it "will have no journey history on initialisation" do
-    expect(subject.journey_log).to eq []
-  end
-
   describe '#top_up' do
 
     it {is_expected.to respond_to(:top_up).with(1).argument}
@@ -56,21 +52,6 @@ RSpec.describe OysterCard do
     it "will deduct a penalty fare" do
       touch_in
       expect{subject.touch_in(entry_station)}.to change{subject.balance}.by(-Journey::PENALTY_FARE)
-    end
-  end
-
-  describe "journey history" do
-    it "will keep a log of a complete journey" do
-      touch_in
-      subject.touch_out(exit_station)
-      expect(subject.journey_log).to eq [{:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>"exit_station", :exit_zone=>3}]
-    end
-
-    it "will record an incomplete journey" do
-      touch_in
-      touch_in
-      subject.touch_out(exit_station)
-      expect(subject.journey_log).to eq [{:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>nil, :exit_zone=>nil}, {:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>"exit_station", :exit_zone=>3}]
     end
   end
 end
