@@ -1,5 +1,3 @@
-require 'oystercard'
-
 RSpec.describe OysterCard do
 
   let(:entry_station) { double name: "entry_station", zone: 1 }
@@ -62,13 +60,13 @@ RSpec.describe OysterCard do
   end
 
   describe "journey history" do
-    it "will keep a log of a full journey" do
+    it "will keep a log of a complete journey" do
       touch_in
       subject.touch_out(exit_station)
       expect(subject.journey_log).to eq [{:entry_station=>"entry_station", :entry_zone=>1, :exit_station=>"exit_station", :exit_zone=>3}]
     end
 
-    it "will record an imcomplete journey" do
+    it "will record an incomplete journey" do
       touch_in
       touch_in
       subject.touch_out(exit_station)

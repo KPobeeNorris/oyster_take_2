@@ -1,4 +1,5 @@
 require_relative 'journey'
+require_relative 'station'
 
 class OysterCard
 
@@ -20,15 +21,12 @@ class OysterCard
 
   def touch_in(station)
     fail "Sorry, you don't have the required minimum balance of #{MIN_BALANCE}" if balance < 1
-    if @journey.journey[:entry_station] != nil
-      reset_journey
-    end
-    @journey.start_journey(station)
+    new_journey(station)
     in_journey?
   end
 
   def touch_out(station)
-    @journey.end_journey(station)
+    @journey.finish(station)
     reset_journey
     in_journey?
   end
@@ -37,13 +35,20 @@ class OysterCard
     @journey.journey[:entry_station] != nil
   end
 
+  private
+
+  def new_journey(station)
+    if @journey.journey[:entry_station] != nil
+      reset_journey
+    end
+    @journey.start(station)
+  end
+
   def reset_journey
     journey_log << @journey.journey
     deduct(@journey.fare)
     @journey.journey = { entry_station: nil, entry_zone: nil, exit_station: nil, exit_zone: nil }
   end
-
-  private
 
   def deduct(fare)
     @balance -= fare

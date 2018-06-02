@@ -8,21 +8,21 @@ class Journey
     @journey = { entry_station: nil, entry_zone: nil, exit_station: nil, exit_zone: nil }
   end
 
-  def start_journey(station)
+  def start(station)
     @journey[:entry_station] = station.name
     @journey[:entry_zone] = station.zone
   end
 
-  def end_journey(station)
+  def finish(station)
     @journey[:exit_station] = station.name
     @journey[:exit_zone] = station.zone
   end
 
   def fare
-    journey_complete? ? MIN_FARE : PENALTY_FARE
+    complete? ? MIN_FARE : PENALTY_FARE
   end
 
-  def journey_complete?
+  def complete?
     journey[:entry_station] != nil && journey[:exit_station] != nil
   end
 end

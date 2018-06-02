@@ -1,5 +1,3 @@
-require 'station'
-
 RSpec.describe Station do
 
   subject { described_class.new("Bank", 1) }
